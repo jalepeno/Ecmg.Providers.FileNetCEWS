@@ -1,1 +1,1 @@
-# Providers.FileNetCEWS
+﻿A .NET library for abstracting FileNet P8 documents, versions and metadata.  It is a free version of a portion of the original Content Transformation Services framework.
