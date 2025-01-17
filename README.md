@@ -1,1 +1,1 @@
-﻿Ecmg.DocumentsProviders.FileNetCEWS.dll is a .NET Core library for connecting to and working with a FileNet P8 object store.  It is a free version of a portion of the Content Transformation Services framework.
+﻿Ecmg.Providers.FileNetCEWS.dll is a .NET Core library for connecting to and working with a FileNet P8 object store.  It is a free version of a portion of the Content Transformation Services framework.
