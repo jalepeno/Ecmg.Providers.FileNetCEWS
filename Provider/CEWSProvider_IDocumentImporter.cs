@@ -95,6 +95,9 @@ namespace Documents.Providers.FileNetCEWS
 
         }
 
+        //  Pass along any error message we get back to the args
+        if (!string.IsNullOrEmpty(errorMessage)) { args.ErrorMessage = errorMessage; }
+
         if (addDocumentSuccess && args.Document.HasAnnotations() && args.SetAnnotations)
         {
           //  Only attempt to import annotations if the add document operation succeeded and annotations are present in the document.

@@ -395,12 +395,14 @@ namespace Documents.Providers.FileNetCEWS
         catch (Exception ex)
         {
           ApplicationLogging.LogException(ex, MethodBase.GetCurrentMethod());
+          errorMessage += $"AddDocument Failed '{ex.Message}'";
           return false;
         }
       }
       catch (Exception ex)
       {
         ApplicationLogging.LogException(ex, MethodBase.GetCurrentMethod());
+        errorMessage += $"AddDocument Failed '{ex.Message}'";
         //  Re - throw the exception to the caller
         throw;
       }
