@@ -1534,59 +1534,75 @@ namespace Documents.Providers.FileNetCEWS
         string className = string.Empty;
         string classSymbolicName = string.Empty;
 
-        SingleObjectResponse firstObjectResponse = (SingleObjectResponse)objectResponse.GetObjectsResponse1[0];
+        var firstObjectResponse = objectResponse.GetObjectsResponse1[0];
 
-        for (int propertyCounter = 0; propertyCounter < firstObjectResponse.Object.Property.Length; propertyCounter++)
+        if (firstObjectResponse is ErrorStackResponse errorResponse)
         {
-          propertyType = firstObjectResponse.Object.Property[propertyCounter];
-          Debug.Print($"PropertyCounter: {propertyCounter} {propertyType.propertyId}");
-
-          switch (propertyType.propertyId)
+          string errorName = errorResponse.ErrorStack.ErrorName.ToString();
+          string errorDescription = errorResponse.ErrorStack.ErrorRecord[0].Description;
+          if (errorName == "OBJECT_NOT_FOUND")
           {
-            case "Id":
-              idPropertyType = (SingletonId)propertyType;
-              classId = idPropertyType.Value.ToString();
-              break;
-            
-            case "Name":
-              stringPropertyType = (SingletonString)propertyType;
-              className = stringPropertyType.Value;
-              break;
-            
-            case "SymbolicName":
-              stringPropertyType = (SingletonString)propertyType;
-              classSymbolicName = stringPropertyType.Value;
-              break;
+            ApplicationLogging.WriteLogEntry($"Unable to get information for property template, check to make sure the current logged on user has sufficient rights. ({errorName}; {errorDescription})", MethodBase.GetCurrentMethod(), TraceEventType.Error, 911);
+            throw new ItemDoesNotExistException(errorDescription);
+          }
+        }
+        if (firstObjectResponse is SingleObjectResponse singleObjectResponse)
+        {
 
-            case "PropertyDefinitions":
-              ListOfObject propertyTypes = (ListOfObject)propertyType;
-              for (int propertyDefinitionCounter = 0; propertyDefinitionCounter < propertyTypes.Value.Length; propertyDefinitionCounter++)
-              {
-                propertyDefinitionStub = propertyTypes.Value[propertyDefinitionCounter];
-                classificationProperty = GetClassificationProperty(propertyDefinitionStub);
+          for (int propertyCounter = 0; propertyCounter < singleObjectResponse.Object.Property.Length; propertyCounter++)
+          {
+            propertyType = singleObjectResponse.Object.Property[propertyCounter];
+            Debug.Print($"PropertyCounter: {propertyCounter} {propertyType.propertyId}");
 
-                if (excludeProperties == null)
+            switch (propertyType.propertyId)
+            {
+              case "Id":
+                idPropertyType = (SingletonId)propertyType;
+                classId = idPropertyType.Value.ToString();
+                break;
+
+              case "Name":
+                stringPropertyType = (SingletonString)propertyType;
+                className = stringPropertyType.Value;
+                break;
+
+              case "SymbolicName":
+                stringPropertyType = (SingletonString)propertyType;
+                classSymbolicName = stringPropertyType.Value;
+                break;
+
+              case "PropertyDefinitions":
+                ListOfObject propertyTypes = (ListOfObject)propertyType;
+                for (int propertyDefinitionCounter = 0; propertyDefinitionCounter < propertyTypes.Value.Length; propertyDefinitionCounter++)
                 {
-                  classificationProperties.Add(classificationProperty);
-                }
-                else
-                {
-                  if (!excludeProperties.Contains(classificationProperty.PackedName))
+                  propertyDefinitionStub = propertyTypes.Value[propertyDefinitionCounter];
+                  classificationProperty = GetClassificationProperty(propertyDefinitionStub);
+
+                  if (excludeProperties == null)
                   {
                     classificationProperties.Add(classificationProperty);
                   }
+                  else
+                  {
+                    if (!excludeProperties.Contains(classificationProperty.PackedName))
+                    {
+                      classificationProperties.Add(classificationProperty);
+                    }
+                  }
                 }
-              }
-              break;
-                  
-            default:
-              break;
+                break;
+
+              default:
+                break;
+            }
           }
+
+          documentClass = new DocumentClass(classSymbolicName, classificationProperties, classId, className);
+
+          return documentClass;
+
         }
-
-        documentClass = new DocumentClass(classSymbolicName, classificationProperties, classId, className);
-
-        return documentClass;
+        else { return null; }
 
       }
       catch (Exception ex)
@@ -3535,6 +3551,10 @@ namespace Documents.Providers.FileNetCEWS
                         ceProperty = Factory.SingletonInteger32(cleanPropertyName, propValue, true);
                       }
                     }
+                    else
+                    {
+                      ceProperty = Factory.SingletonInteger32(cleanPropertyName, (long)property.Value, true);
+                    }
                     break;
                   }
 
@@ -3811,11 +3831,10 @@ namespace Documents.Providers.FileNetCEWS
                   incProps[7]= new FilterElementType() { Value = "RetrievalName", maxRecursion = 5, maxRecursionSpecified = true };
                   incProps[8] = new FilterElementType() { Value = "ContentLocation", maxRecursion = 4, maxRecursionSpecified = true };
                   incProps[9] = new FilterElementType() { Value = "ContentType", maxRecursion = 4, maxRecursionSpecified = true };
-                }
-
-                if (exportAnnotations)
-                {
-                  incProps[10] = new FilterElementType() { Value = "Annotations", maxRecursion = 5, maxRecursionSpecified = true };
+                  if (exportAnnotations)
+                  {
+                    incProps[10] = new FilterElementType() { Value = "Annotations", maxRecursion = 5, maxRecursionSpecified = true };
+                  }
                 }
 
                 request.PropertyFilter.IncludeProperties =  incProps;

@@ -73,6 +73,9 @@ namespace Documents.Providers.FileNetCEWS
         if (args == null) { throw new ArgumentNullException(nameof(args)); }
         id = args.Id;
         
+        //  If we are not going to get the content, we will not get the annotations either, regardless of whether or notthey were requested.
+        if (!args.GetContent) { args.GetAnnotations = false; }
+
         document = GetDocumentById(id, args.GetContent, args.GetAnnotations, TargetVersion.AllVersions, "", args.StorageType, args.Transformation);
 
         args.Document = document;
